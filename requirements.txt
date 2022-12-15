@@ -1,0 +1,12 @@
+###############Without GPU#####################
+numpy==1.23.4
+onnxruntime==1.12.1
+torch==1.8.1+cpu
+torchvision==0.9.1+cpu
+opencv_python==4.5.3.56
+
+###########With GPU##########################
+# torch==1.13.0+cu116
+# torchvision==0.14.0+cu116
+# onnxruntime_gpu==1.13.1
+# opencv_python_headless==4.6.0.66
