@@ -9,17 +9,17 @@ import argparse
 
 
 class ort_v5:
-    def __init__(self, img_path, onnx_model, conf_thres, iou_thres, img_size, cuda, classes):
+    def __init__(self, img_path, onnx_model, conf_thres, iou_thres, img_size, classes):
         self.img_path= img_path
         self.onnx_model=onnx_model
         self.conf_thres=conf_thres
         self.iou_thres =iou_thres
         self.img_size=img_size
-        self.cuda= cuda
+        # self.cuda= cuda
         self.names= classes
 
     def __call__(self):
-
+        #image preprocessing
         image_or= cv2.imread(self.img_path)
         image, ratio, dwdh = self.letterbox(image_or, auto=False)
         image = image.transpose((2, 0, 1))
@@ -27,52 +27,29 @@ class ort_v5:
         image = np.ascontiguousarray(image)
         im = image.astype(np.float32)
         im /= 255
-        print(im.shape)
+        # print(im.shape)
 
+        #onnxruntime session
         session= self.ort_session()
         outname = [i.name for i in session.get_outputs()]
         inname = [i.name for i in session.get_inputs()]
-        print('input-output names:',inname,outname)
-
+        # print('input-output names:',inname,outname)
         inp = {inname[0]:im}
-        # ONNX inference
+
+        # ONNXRuntime inference
         t1 = time.time()
         outputs = session.run(outname, inp)[0]
         output= torch.from_numpy(outputs)
         out =self. non_max_suppression(output, conf_thres=0.7, iou_thres=0.5)[0]
-        print('predictions',out)
+        print('Predictions:',out)
         t2 = time.time()
-        print('onnxruntime inference time:', t2-t1)
+        print('ONNXRuntime Inference Time:', t2-t1)
         img=self.result(image_or,ratio, dwdh, out)
         cv2.imwrite('result.jpg', img)
         # print('result', img.shape)
         # cv2.imshow('result',img)
         # cv2.waitKey(0)
  
-    def result(self,img,ratio, dwdh, out):
-        colors = {name:[random.randint(0, 255) for _ in range(3)] for i,name in enumerate(self.names)}   
-        for i,(x0,y0,x1,y1,score,cls_id) in enumerate(out):
-            box = np.array([x0,y0,x1,y1])
-            box -= np.array(dwdh*2)
-            box /= ratio
-            box = box.round().astype(np.int32).tolist()
-            cls_id = int(cls_id)
-            score = round(float(score),3)
-            name = self.names[cls_id]
-            color = colors[name]
-            name += ' '+str(score)
-            cv2.rectangle(img,box[:2],box[2:],color,2)
-            cv2.putText(img,name,(box[0], box[1] - 2),cv2.FONT_HERSHEY_SIMPLEX,0.75,[225, 255, 255],thickness=2) 
-        return img
-        # cv2.imwrite('v5_onnx.jpg', img) 
-        # cv2.imshow('result',img)
-        # cv2.waitKey(0)
-        
-    def ort_session(self):
-        providers = ['CUDAExecutionProvider', 'CPUExecutionProvider'] if self.cuda else ['CPUExecutionProvider']
-        session = ort.InferenceSession(self.onnx_model, providers=providers)
-        return session
-
     def box_iou(self,box1, box2, eps=1e-7):
         # https://github.com/pytorch/vision/blob/master/torchvision/ops/boxes.py
         """
@@ -220,6 +197,16 @@ class ort_v5:
         y[:, 3] = x[:, 1] + x[:, 3] / 2  # bottom right y
         return y
 
+    # Read classes.txt 
+    def class_name(self):
+        classes=[]
+        file= open(self.names,'r')
+        while True:
+          name=file.readline().strip('\n')
+          classes.append(name)
+          if not name:
+            break
+        return classes
 
     def letterbox(self, im, color=(114, 114, 114), auto=True, scaleup=True, stride=32):
         # Resize and pad image while meeting stride-multiple constraints
@@ -248,17 +235,46 @@ class ort_v5:
         top, bottom = int(round(dh - 0.1)), int(round(dh + 0.1))
         left, right = int(round(dw - 0.1)), int(round(dw + 0.1))
         im = cv2.copyMakeBorder(im, top, bottom, left, right, cv2.BORDER_CONSTANT, value=color)  # add border
-        return im, r, (dw, dh)    
+        return im, r, (dw, dh)
+
+    # Initialize ONNXRuntime session   
+    def ort_session(self):
+        providers = ['CUDAExecutionProvider', 'CPUExecutionProvider'] if ort.get_device()=='GPU' else ['CPUExecutionProvider']
+        session = ort.InferenceSession(self.onnx_model, providers=providers)
+        print(session.get_providers())
+        return session
+
+    # Display results
+    def result(self,img,ratio, dwdh, out):
+        names= self.class_name()
+        colors = {name:[random.randint(0, 255) for _ in range(3)] for i,name in enumerate(names)}   
+        for i,(x0,y0,x1,y1,score,cls_id) in enumerate(out):
+            box = np.array([x0,y0,x1,y1])
+            box -= np.array(dwdh*2)
+            box /= ratio
+            box = box.round().astype(np.int32).tolist()
+            cls_id = int(cls_id)
+            score = round(float(score),3)
+            name = names[cls_id]
+            color = colors[name]
+            name += ' '+str(score)
+            cv2.rectangle(img,box[:2],box[2:],color,2)
+            cv2.putText(img,name,(box[0], box[1] - 2),cv2.FONT_HERSHEY_SIMPLEX,0.75,[225, 255, 255],thickness=2) 
+        return img
+        # cv2.imwrite('v5_onnx.jpg', img) 
+        # cv2.imshow('result',img)
+        # cv2.waitKey(0)
+    
             
-classes=['person', 'bicycle', 'car', 'motorcycle', 'airplane', 'bus', 'train', 'truck', 'boat', 'traffic light', 
-         'fire hydrant', 'stop sign', 'parking meter', 'bench', 'bird', 'cat', 'dog', 'horse', 'sheep', 'cow', 
-         'elephant', 'bear', 'zebra', 'giraffe', 'backpack', 'umbrella', 'handbag', 'tie', 'suitcase', 'frisbee', 
-         'skis', 'snowboard', 'sports ball', 'kite', 'baseball bat', 'baseball glove', 'skateboard', 'surfboard', 
-         'tennis racket', 'bottle', 'wine glass', 'cup', 'fork', 'knife', 'spoon', 'bowl', 'banana', 'apple', 
-         'sandwich', 'orange', 'broccoli', 'carrot', 'hot dog', 'pizza', 'donut', 'cake', 'chair', 'couch', 
-         'potted plant', 'bed', 'dining table', 'toilet', 'tv', 'laptop', 'mouse', 'remote', 'keyboard', 'cell phone', 
-         'microwave', 'oven', 'toaster', 'sink', 'refrigerator', 'book', 'clock', 'vase', 'scissors', 'teddy bear', 
-         'hair drier', 'toothbrush']
+# classes=['person', 'bicycle', 'car', 'motorcycle', 'airplane', 'bus', 'train', 'truck', 'boat', 'traffic light', 
+#          'fire hydrant', 'stop sign', 'parking meter', 'bench', 'bird', 'cat', 'dog', 'horse', 'sheep', 'cow', 
+#          'elephant', 'bear', 'zebra', 'giraffe', 'backpack', 'umbrella', 'handbag', 'tie', 'suitcase', 'frisbee', 
+#          'skis', 'snowboard', 'sports ball', 'kite', 'baseball bat', 'baseball glove', 'skateboard', 'surfboard', 
+#          'tennis racket', 'bottle', 'wine glass', 'cup', 'fork', 'knife', 'spoon', 'bowl', 'banana', 'apple', 
+#          'sandwich', 'orange', 'broccoli', 'carrot', 'hot dog', 'pizza', 'donut', 'cake', 'chair', 'couch', 
+#          'potted plant', 'bed', 'dining table', 'toilet', 'tv', 'laptop', 'mouse', 'remote', 'keyboard', 'cell phone', 
+#          'microwave', 'oven', 'toaster', 'sink', 'refrigerator', 'book', 'clock', 'vase', 'scissors', 'teddy bear', 
+#          'hair drier', 'toothbrush']
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--image',help='Specify input image', default= '', type=str)
@@ -266,9 +282,9 @@ if __name__ == "__main__":
     parser.add_argument('--conf_thres',default= 0.7, type=float, help='confidence threshold')
     parser.add_argument('--iou_thres',type= float, default= 0.5, help='iou threshold')
     parser.add_argument('--imgs', default=640,type= int, help='image size')
-    parser.add_argument('--cuda', default= False, help='define device')
-    # parser.add_argument('--classes', help='class names')
+    # parser.add_argument('--cuda', default= False, help='define device')
+    parser.add_argument('--classes',type=str,default='', help='class names')
     opt= parser.parse_args()
     print(opt)
-    ORT= ort_v5(opt.image, opt.weights, conf_thres= opt.conf_thres, iou_thres=opt.iou_thres, img_size=(opt.imgs,opt.imgs), cuda=opt.cuda, classes=classes)
+    ORT= ort_v5(opt.image, opt.weights, conf_thres= opt.conf_thres, iou_thres=opt.iou_thres, img_size=(opt.imgs,opt.imgs), classes=opt.classes)
     ORT()
