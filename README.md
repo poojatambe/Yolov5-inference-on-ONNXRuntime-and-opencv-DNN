@@ -23,3 +23,7 @@
 4. IOU threshold value
 5. Image size
 6. Classes.txt file
+
+* References
+1. https://github.com/ultralytics/yolov5
+2. https://github.com/WongKinYiu/yolov7
