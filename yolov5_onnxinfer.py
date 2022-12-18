@@ -39,11 +39,11 @@ class ort_v5:
         # ONNXRuntime inference
         t1 = time.time()
         outputs = session.run(outname, inp)[0]
-        output= torch.from_numpy(outputs)
-        out =self. non_max_suppression(output, conf_thres=0.7, iou_thres=0.5)[0]
-        print('Predictions:',out)
         t2 = time.time()
-        print('ONNXRuntime Inference Time:', t2-t1)
+        output= torch.from_numpy(outputs)
+        out =self.non_max_suppression(output, conf_thres=0.7, iou_thres=0.5)[0]
+        print('Predictions:',out)
+        print('yolov5 ONNXRuntime Inference Time:', t2-t1)
         img=self.result(image_or,ratio, dwdh, out)
         cv2.imwrite('result.jpg', img)
         # print('result', img.shape)
@@ -288,3 +288,4 @@ if __name__ == "__main__":
     print(opt)
     ORT= ort_v5(opt.image, opt.weights, conf_thres= opt.conf_thres, iou_thres=opt.iou_thres, img_size=(opt.imgs,opt.imgs), classes=opt.classes)
     ORT()
+  
