@@ -5,7 +5,7 @@
 * yolov5.onnx model in Netron
 <img width="941" alt="v5onnx_nms" src="https://user-images.githubusercontent.com/64680838/207949434-6cb25740-57d1-420b-8384-f81cb33fd284.PNG">
 
-** ONNXRuntime **
+**ONNXRuntime**
 
 * For GPU system install ONNXRuntime-GPU library and ONNXRuntime for CPU system.
 ```
@@ -26,7 +26,7 @@
 5. Image size
 6. Classes.txt file
 
-** Opencv DNN **
+**Opencv DNN**
 
 * Command to run code:
 
@@ -46,9 +46,12 @@
 8. Classes.txt file
 
 * Comparison of inference time:
+
 For image 'bus.jpg', inference time of ONNXRuntime and opencv DNN module are:
- * opencv DNN: 0.29987263679504395
- * ONNXRuntime: 0.13161110877990723
+
+  1. opencv DNN: 0.29987263679504395
+ 
+ 2. ONNXRuntime: 0.13161110877990723
 
 * References
 1. https://github.com/ultralytics/yolov5
