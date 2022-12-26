@@ -41,7 +41,7 @@ class ort_v5:
         outputs = session.run(outname, inp)[0]
         t2 = time.time()
         output= torch.from_numpy(outputs)
-        out =self.non_max_suppression(output, conf_thres=0.7, iou_thres=0.5)[0]
+        out =self.non_max_suppression(output, self.conf_thres, self.iou_thres)[0]
         print('Predictions:',out)
         print('yolov5 ONNXRuntime Inference Time:', t2-t1)
         img=self.result(image_or,ratio, dwdh, out)
@@ -72,8 +72,8 @@ class ort_v5:
 
     def non_max_suppression(self,
             prediction,
-            conf_thres=0.7,
-            iou_thres=0.5,
+            conf_thres,
+            iou_thres,
             classes=None,
             agnostic=False,
             multi_label=False,

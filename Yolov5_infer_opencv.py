@@ -89,9 +89,10 @@ class detectv5:
             cv2.rectangle(img, (left, top), (left + dim[0], top + dim[1] + baseline), (0,0,0), cv2.FILLED)
             cv2.putText(img, label, (left, top + dim[1]), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 0), 1, cv2.LINE_AA)
 
-        # cv2.imwrite('result.jpg', img)
-        cv2.imshow('output',img)    
-        cv2.waitKey(0)
+        cv2.imwrite('result.jpg', img)
+        # cv2.imshow('output',img)    
+        # cv2.waitKey(0)
+        
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
