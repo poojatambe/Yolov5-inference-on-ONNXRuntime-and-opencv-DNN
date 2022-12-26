@@ -53,7 +53,7 @@ For image 'bus.jpg', inference time of ONNXRuntime and opencv DNN module are:
  
  2. ONNXRuntime: 0.13161110877990723
 
-** Streamlit yolov5 Inference App **
+**Streamlit yolov5 Inference App**
 
 * Install streamlit.
 
