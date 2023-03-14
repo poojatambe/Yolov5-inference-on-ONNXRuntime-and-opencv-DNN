@@ -69,25 +69,26 @@ class detectv5:
                     left= int((x - w/2)* x_scale )
                     top= int((y - h/2)*y_scale)
                     width = int(w * x_scale)
-                    height = int( y*y_scale)
+                    height = int(h *y_scale)
                     box= np.array([left, top, width, height])
                     boxes.append(box)
 
 
         indices = cv2.dnn.NMSBoxes(boxes, np.array(score), conf_threshold, nms_threshold)
-        print(indices)
+        # print(indices)
         for i in indices:
-            box = boxes[i]
+            box = boxes[i[0]]
             left = box[0]
             top = box[1]
             width = box[2]
             height = box[3] 
             cv2.rectangle(img, (left, top), (left + width, top + height), (0, 0, 255), 3)
-            label = "{}:{:.2f}".format(classes[class_ids[i]], score[i])
+            label = "{}:{:.2f}".format(classes[class_ids[i[0]]], score[i[0]])
             text_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.7, 1)
             dim, baseline = text_size[0], text_size[1]
             cv2.rectangle(img, (left, top), (left + dim[0], top + dim[1] + baseline), (0,0,0), cv2.FILLED)
             cv2.putText(img, label, (left, top + dim[1]), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 0), 1, cv2.LINE_AA)
+            print('predictions: ', box, class_ids[i[0]], score[i[0]] )
 
         cv2.imwrite('result.jpg', img)
         # cv2.imshow('output',img)    

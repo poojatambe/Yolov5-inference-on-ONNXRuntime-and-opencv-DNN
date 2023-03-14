@@ -11,6 +11,7 @@ import argparse
 class ort_v5:
     def __init__(self, img_path, onnx_model, conf_thres, iou_thres, img_size, classes):
         self.img_path= img_path
+        print(self.img_path)
         self.onnx_model=onnx_model
         self.conf_thres=conf_thres
         self.iou_thres =iou_thres
@@ -49,6 +50,7 @@ class ort_v5:
         # print('result', img.shape)
         # cv2.imshow('result',img)
         # cv2.waitKey(0)
+        return out
  
     def box_iou(self,box1, box2, eps=1e-7):
         # https://github.com/pytorch/vision/blob/master/torchvision/ops/boxes.py
