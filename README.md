@@ -15,8 +15,8 @@
 * Command to run the code:
 
 ```
-!python yolov5_onnxinfer.py  --image 'bus.jpg'  --weights 'yolov5s.onnx' --conf_thres 0.7 \
-      --iou_thres 0.5 --imgs 640 --classes 'classes.txt'
+!python yolov5_onnxinfer.py  --image ./bus.jpg  --weights ./yolov5s.onnx --conf_thres 0.7 \
+      --iou_thres 0.5 --imgs 640 --classes ./classes.txt
 ```
 * Arguments Details:
 1. Input image
